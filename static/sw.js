@@ -22,43 +22,42 @@ self.addEventListener('install', event => {
 self.addEventListener('fetch', event => {
   // Only handle GET requests
   if (event.request.method !== 'GET') return;
-
-  // Get the URL pathname
-  const url = new URL(event.request.url);
-  const pathname = url.pathname;
-
-  // Only handle specific routes
-  if (pathname === '/' || 
-      pathname.startsWith('/static/') || 
-      pathname === '/manifest.json' || 
-      pathname === '/sw.js') {
-    event.respondWith(
-      caches.match(event.request)
-        .then(response => {
-          if (response) {
-            return response;
-          }
-          return fetch(event.request)
-            .then(response => {
-              // Cache the successful response
-              if (response.ok) {
-                const responseClone = response.clone();
-                caches.open(CACHE_NAME).then(cache => {
-                  cache.put(event.request, responseClone);
-                });
-              }
-              return response;
-            })
-            .catch(() => {
-              // Return a fallback response or handle the error
-              return new Response('Offline', {
-                status: 200,
-                headers: new Headers({
-                  'Content-Type': 'text/plain'
-                })
-              });
-            });
-        })
-    );
+  
+  // Don't cache or handle API requests
+  if (event.request.url.includes('/api/')) {
+    return;
   }
+  
+  event.respondWith(
+    caches.match(event.request)
+      .then(response => {
+        if (response) {
+          return response;
+        }
+        return fetch(event.request)
+          .then(response => {
+            // Cache the successful response
+            if (response.ok) {
+              const responseClone = response.clone();
+              caches.open(CACHE_NAME).then(cache => {
+                cache.put(event.request, responseClone);
+              });
+            }
+            return response;
+          })
+          .catch(() => {
+            // Return a fallback response for HTML requests
+            if (event.request.headers.get('accept').includes('text/html')) {
+              return caches.match('/');
+            }
+            // Return a simple offline message for other requests
+            return new Response('Offline', {
+              status: 200,
+              headers: new Headers({
+                'Content-Type': 'text/plain'
+              })
+            });
+          });
+      })
+  );
 });
