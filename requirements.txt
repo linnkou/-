@@ -1,4 +1,5 @@
 Flask
+gunicorn
 SQLAlchemy
 alembic
 arabic-reshaper
