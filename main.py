@@ -308,6 +308,7 @@ def process_file(file_path, num_classes, classes_data, grade_comments):
 
 app = Flask(__name__, template_folder="templates", static_folder="static")
 app.secret_key = "your_secret_key_here"  # Required for flash messages
+app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0  # Disable caching for development
 
 @app.route('/manifest.json')
 def manifest():
